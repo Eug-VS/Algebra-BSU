@@ -12,8 +12,9 @@ f = [4.21, 6.47 + k, 2.38, 10.48 + k]
 
 S = SLAE(A, f)
 
-print(S.get_matrix())
+print(S.extract_matrix())
 S.gaussian_elimination()
-print(S.get_solutions())
+print(S.extract_solutions())
 print(S.determinant)
-print(S.get_inverse_matrix())
+print(S.extract_inverse_matrix())
+print(S.get_residual())

@@ -3,16 +3,15 @@ import numpy as np
 
 class SLAE:
     def __init__(self, matrix, vector):
-        v = np.array(vector)[np.newaxis].T
-        self.system = np.append(matrix, v, axis=1)
+        self.initial_matrix = np.array(matrix)
+        self.initial_vector = vector
+        self.system = np.append(matrix, np.array(vector)[np.newaxis].T, axis=1)
         self.dimension = len(vector)
         self.determinant = 1
-
-        reversed = np.zeros((self.dimension, self.dimension))
+        inverse = np.zeros((self.dimension, self.dimension))
         for i in range(self.dimension):
-            reversed[i][i] = 1
-
-        self.system = np.append(self.system, reversed, axis=1)
+            inverse[i][i] = 1
+        self.system = np.append(self.system, inverse, axis=1)
 
     def __str__(self):
         return np.array2string(self.system, max_line_width=np.inf)
@@ -40,13 +39,13 @@ class SLAE:
             row = [item - t * target for item, t in zip(row, terminator)]
             self.system[i] = row
 
-    def get_matrix(self):
+    def extract_matrix(self):
         return self.system[:, :self.dimension]
 
-    def get_solutions(self):
+    def extract_solutions(self):
         return self.system[:, self.dimension]
 
-    def get_inverse_matrix(self):
+    def extract_inverse_matrix(self):
         return self.system[:, -self.dimension:]
 
     def gaussian_elimination(self):
@@ -56,3 +55,15 @@ class SLAE:
 
         for i in reversed(range(self.dimension)):
             self.reverse(i)
+
+    def get_residual(self):
+        solutions = self.extract_solutions()
+        output = np.zeros(self.dimension)
+        for i in range(self.dimension):
+            row = self.initial_matrix[i]
+            for row_item, column_item in zip(row, solutions):
+                output[i] += row_item * column_item
+        residual = [out_item - exp_item for out_item, exp_item in zip(output, self.initial_vector)]
+        return residual
+
+
