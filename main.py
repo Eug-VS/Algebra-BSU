@@ -11,7 +11,6 @@ A = [[3.81, 0.25, 1.28, 0.75 + k],
 f = [4.21, 6.47 + k, 2.38, 10.48 + k]
 
 S = SLAE(A, f)
-
 print('Initial matrix: ')
 print(S.extract_matrix())
 S.gaussian_elimination()
