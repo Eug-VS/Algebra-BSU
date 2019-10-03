@@ -30,6 +30,18 @@ class SLAE:
         """Return string representation of the object for debugging"""
         return np.array2string(self.system, max_line_width=np.inf)
 
+    def extract_matrix(self):
+        """Extract the matrix from the general system"""
+        return self.system[:, :self.dimension]
+
+    def extract_solutions(self):
+        """Extract the solutions vector from the general system"""
+        return self.system[:, self.dimension]
+
+    def extract_inverse_matrix(self):
+        """Extract the inverse from the general system"""
+        return self.system[:, -self.dimension:]
+
     def preprocess(self, index):
         """
         Preprocess the matrix by finding an item with the greatest
@@ -90,18 +102,6 @@ class SLAE:
             target = row[index]
             row = [item - t * target for item, t in zip(row, terminator)]
             self.system[i] = row
-
-    def extract_matrix(self):
-        """Extract the matrix from the general system"""
-        return self.system[:, :self.dimension]
-
-    def extract_solutions(self):
-        """Extract the solutions vector from the general system"""
-        return self.system[:, self.dimension]
-
-    def extract_inverse_matrix(self):
-        """Extract the inverse from the general system"""
-        return self.system[:, -self.dimension:]
 
     def gaussian_elimination(self):
         """
