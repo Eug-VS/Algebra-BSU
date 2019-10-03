@@ -8,6 +8,7 @@ class SLAE:
         self.system = np.append(matrix, np.array(vector)[np.newaxis].T, axis=1)
         self.dimension = len(vector)
         self.determinant = 1
+
         inverse = np.zeros((self.dimension, self.dimension))
         for i in range(self.dimension):
             inverse[i][i] = 1
@@ -15,6 +16,20 @@ class SLAE:
 
     def __str__(self):
         return np.array2string(self.system, max_line_width=np.inf)
+
+    def preprocess(self, index):
+        max, max_i, max_j = 0, 0, 0
+        for i in range(index, self.dimension):
+            for j in range(index, self.dimension):
+                if abs(self.system[i][j]) > max:
+                    max = abs(self.system[i][j])
+                    max_i, max_j = i, j
+        self.system[index], self.system[max_i] = self.system[max_i], self.system[index].copy()
+        self.system[:, index], self.system[:, max_j] = self.system[:, max_j], self.system[:, index].copy()
+        if max_i != index:
+            self.determinant *= -1
+        if max_j != index:
+            self.determinant *= -1
 
     def forward(self, index):
         terminator = self.system[index]
@@ -24,7 +39,7 @@ class SLAE:
             row = self.system[i]
             if i != index:
                 target = row[index]
-                row = [item - t * target/divider for item, t in zip(row, terminator)]
+                row = [item - t / divider * target for item, t in zip(row, terminator)]
                 self.system[i] = row
 
     def reverse(self, index):
@@ -50,6 +65,8 @@ class SLAE:
 
     def gaussian_elimination(self):
         for i in range(self.dimension):
+            print(self)
+            self.preprocess(i)
             self.forward(i)
             self.determinant *= self.system[i][i]
 
@@ -66,4 +83,15 @@ class SLAE:
         residual = [out_item - exp_item for out_item, exp_item in zip(output, self.initial_vector)]
         return residual
 
+    def multiply_back(self):
+        output = np.zeros((self.dimension, self.dimension))
+        inverse = self.extract_inverse_matrix()
+        initial = self.initial_matrix.T
+        for i in range(self.dimension):
+            row = inverse[i]
+            for j in range(self.dimension):
+                column = initial[j]
+                for row_item, column_item in zip(row, column):
+                    output[i][j] += row_item * column_item
+        return output
 
