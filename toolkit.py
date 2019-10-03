@@ -14,10 +14,7 @@ class SLAE:
         # - Vector of solutions (N x 1)
         # - Inverse matrix (N x N) - initialized with unit matrix
         self.system = np.append(matrix, np.array(vector)[np.newaxis].T, axis=1)
-        inverse = np.zeros((self.dimension, self.dimension))
-        for i in range(self.dimension):
-            inverse[i][i] = 1
-        self.system = np.append(self.system, inverse, axis=1)
+        self.system = np.append(self.system, np.identity(self.dimension), axis=1)
 
     def __str__(self):
         return np.array2string(self.system, max_line_width=np.inf)
@@ -36,13 +33,11 @@ class SLAE:
         -find an item with the greatest absolute value
         -swap rows & columns so that it lays onto index position of the diagonal
         """
-        # Find max element and its' position
-        max_value, max_i, max_j = 0, 0, 0   
+        max_value, max_i, max_j = 0, 0, 0
         for i in range(index, self.dimension):
             for j in range(index, self.dimension):
                 if abs(self.system[i][j]) > max_value:
-                    max_value = abs(self.system[i][j])
-                    max_i, max_j = i, j
+                    max_value, max_i, max_j = abs(self.system[i][j]), i, j
 
         # Perform necessary swaps
         self.system[index], self.system[max_i] = self.system[max_i], self.system[index].copy()
@@ -62,7 +57,7 @@ class SLAE:
 
     def backwards(self, index):
         """
-        Process index row so its' only non-zero element is 1.0 and
+        Process index row so its' only non-zero element is 1.0, and
         terminate all elements above it by executing elementary row operations.
         """
         self.system[index] /= self.system[index][index]
