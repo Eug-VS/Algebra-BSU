@@ -12,9 +12,13 @@ f = [4.21, 6.47 + k, 2.38, 10.48 + k]
 
 S = SLAE(A, f)
 
+print('Initial matrix: ')
 print(S.extract_matrix())
 S.gaussian_elimination()
+print('Vector of solutions: ')
 print(S.extract_solutions())
-print(S.determinant)
+print('Determinant:', S.determinant)
+print('Inverse matrix: ')
 print(S.extract_inverse_matrix())
+print('Residual vector: ')
 print(S.get_residual())
