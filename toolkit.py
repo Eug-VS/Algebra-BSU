@@ -8,25 +8,10 @@ class SLAE:
         self.initial_vector = vector
         self.dimension = len(vector)
         self.determinant = 1
-
-        # General system - Matrix(N x N*2+1), includes:
-        # - Working matrix (N x N)
-        # - Vector of solutions (N x 1)
-        # - Inverse matrix (N x N) - initialized with unit matrix
+        self.inverse = np.identity(self.dimension)
+        self.solution = []
         self.system = np.append(matrix, np.array(vector)[np.newaxis].T, axis=1)
-        self.system = np.append(self.system, np.identity(self.dimension), axis=1)
-
-    def __str__(self):
-        return np.array2string(self.system, max_line_width=np.inf)
-
-    def extract_matrix(self):
-        return self.system[:, :self.dimension]
-
-    def extract_solutions(self):
-        return self.system[:, self.dimension]
-
-    def extract_inverse_matrix(self):
-        return self.system[:, -self.dimension:]
+        self.system = np.append(self.system, self.inverse, axis=1)
 
     def preprocess(self, index):
         """Preprocess the matrix:
@@ -68,19 +53,30 @@ class SLAE:
         """
         Perform Gaussian elimination algorithm.
         Use the diagonal elements to compute the determinant.
-        At the same time, form inverse matrix from unit-matrix.
+        Meanwhile, process unit-matrix in order to build inverse matrix.
         """
         # Forward elimination
         for i in range(self.dimension):
             self.preprocess(i)
             self.forward(i)
             self.determinant *= self.system[i][i]
+        self.system, self.inverse = self.system[:, : -self.dimension], self.system[:, -self.dimension:]
         # Back-substitution
+        state = np.copy(self.system)
         for i in reversed(range(self.dimension)):
             self.backwards(i)
+        self.solution = np.copy(self.system[:, -1])
+        # Find inverse matrix column-by-column
+        columns = self.inverse.T
+        for column_index in range(self.dimension):
+            self.system = np.copy(state)
+            self.system[:, -1] = columns[column_index]
+            for i in reversed(range(self.dimension)):
+                self.backwards(i)
+            self.inverse[:, column_index] = np.copy(self.system[:, -1])
 
     def residual(self):
-        return np.dot(self.initial_matrix, self.extract_solutions()) - self.initial_vector
+        return np.dot(self.initial_matrix, self.solution) - self.initial_vector
 
     def verification_matrix(self):
-        return np.dot(self.extract_inverse_matrix(), self.initial_matrix)
+        return np.dot(self.inverse, self.initial_matrix)
