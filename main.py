@@ -11,20 +11,21 @@ A = [[3.81, 0.25, 1.28, 0.75 + alpha],
 f = [4.21, 6.47 + alpha, 2.38, 10.48 + alpha]
 
 S = SLAE(A, f)
-print('Initial matrix: ')
-print(S.initial_matrix)
-print(S.initial_vector)
+print('\nInitial matrix and vector: ')
+print(S.matrix, '\n\n', S.vector)
 
 S.preprocess()
-print('Symmetrical matrix: ')
-print(S.initial_matrix)
-print(S.initial_vector)
+print('\nSymmetrical matrix and corresponding vector: ')
+print(S.matrix, '\n\n', S.vector)
 
-print('Forward: ')
 S.forward()
+print(f'\nDeterminant: {S.determinant}')
+print('\nB = S * D')
 print(np.matmul(S.s, S.d))
+print('\nVector y: ')
 print(S.y)
-print(S.determinant)
+
 S.backwards()
+print('\nVector x: ')
 print(S.x)
 
