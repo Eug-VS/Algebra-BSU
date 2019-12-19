@@ -1,7 +1,7 @@
 from toolkit import *
 
 
-k = -3
+k = 3
 alpha = k / 2
 
 A = [[3.81, 0.25, 1.28, 0.75 + alpha],
@@ -13,13 +13,18 @@ f = [4.21, 6.47 + alpha, 2.38, 10.48 + alpha]
 S = SLAE(A, f)
 print('Initial matrix: ')
 print(S.initial_matrix)
-S.gaussian_elimination()
-print('\nVector of solutions: ')
-print(S.solution)
-print('\nDeterminant:', S.determinant)
-print('\nInverse matrix: ')
-print(S.inverse)
-print('\nResidual vector: ')
-print(S.residual())
-print('\nInverse matrix * original matrix: ')
-print(S.verification_matrix())
+print(S.initial_vector)
+
+S.preprocess()
+print('Symmetrical matrix: ')
+print(S.initial_matrix)
+print(S.initial_vector)
+
+print('Forward: ')
+S.forward()
+print(np.matmul(S.s, S.d))
+print(S.y)
+print(S.determinant)
+S.backwards()
+print(S.x)
+

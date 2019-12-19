@@ -1,4 +1,9 @@
 import numpy as np
+import math
+
+
+def sign(value):
+    return 1 if value > 0 else -1
 
 
 class SLAE:
@@ -7,76 +12,44 @@ class SLAE:
         self.initial_matrix = np.array(matrix)
         self.initial_vector = vector
         self.dimension = len(vector)
+        self.s = np.zeros((self.dimension, self.dimension))
+        self.d = self.s.copy()
+        self.y = np.zeros((self.dimension, 1))
+        self.x = self.y.copy()
         self.determinant = 1
-        self.inverse = np.identity(self.dimension)
         self.solution = []
-        self.system = np.append(matrix, np.array(vector)[np.newaxis].T, axis=1)
-        self.system = np.append(self.system, self.inverse, axis=1)
 
-    def preprocess(self, index):
-        """Preprocess the matrix:
-        -find an item with the greatest absolute value
-        -swap rows & columns so that it lays onto index position of the diagonal
-        """
-        max_value, max_i, max_j = 0, 0, 0
-        for i in range(index, self.dimension):
-            for j in range(index, self.dimension):
-                if abs(self.system[i][j]) > max_value:
-                    max_value, max_i, max_j = abs(self.system[i][j]), i, j
+    def preprocess(self):
+        transpose = self.initial_matrix.T
+        self.initial_matrix = np.matmul(transpose, self.initial_matrix)
+        self.initial_vector = np.matmul(transpose, self.initial_vector)
 
-        # Perform necessary swaps
-        self.system[index], self.system[max_i] = self.system[max_i], self.system[index].copy()
-        self.system[:, index], self.system[:, max_j] = self.system[:, max_j], self.system[:, index].copy()
-
-        # Change the determinant if needed: use XOR to avoid extra check
-        if max_i == index ^ max_j == index:
-            self.determinant *= -1
-
-    def forward(self, index):
-        """
-        Terminate all elements below index position on the diagonal
-        by executing elementary row operations.
-        """
-        for i in range(index + 1, self.dimension):
-            self.system[i] = self.system[i] - self.system[index] / self.system[index][index] * self.system[i][index]
-
-    def backwards(self, index):
-        """
-        Process index row so its' only non-zero element is 1.0, and
-        terminate all elements above it by executing elementary row operations.
-        """
-        self.system[index] /= self.system[index][index]
-        for i in range(index):
-            self.system[i] = self.system[i] - self.system[index] * self.system[i][index]
-
-    def gaussian_elimination(self):
-        """
-        Perform Gaussian elimination algorithm.
-        Use the diagonal elements to compute the determinant.
-        Meanwhile, process unit-matrix in order to build inverse matrix.
-        """
-        # Forward elimination
+    def forward(self):
+        self.s = np.zeros((self.dimension, self.dimension))
+        self.d = np.zeros((self.dimension, self.dimension))
         for i in range(self.dimension):
-            self.preprocess(i)
-            self.forward(i)
-            self.determinant *= self.system[i][i]
-        self.system, self.inverse = self.system[:, : -self.dimension], self.system[:, -self.dimension:]
-        # Back-substitution
-        state = np.copy(self.system)
-        for i in reversed(range(self.dimension)):
-            self.backwards(i)
-        self.solution = np.copy(self.system[:, -1])
-        # Find inverse matrix column-by-column
-        columns = self.inverse.T
-        for column_index in range(self.dimension):
-            self.system = np.copy(state)
-            self.system[:, -1] = columns[column_index]
-            for i in reversed(range(self.dimension)):
-                self.backwards(i)
-            self.inverse[:, column_index] = np.copy(self.system[:, -1])
+            value = self.initial_matrix[i][i]
+            for k in range(i):
+                value -= self.s[k][i] * self.s[k][i] * self.d[k][k]
+            self.d[i][i] = sign(value)
+            self.s[i][i] = math.sqrt(value * self.d[i][i])
+            self.determinant *= self.s[i][i] * self.s[i][i] * self.d[i][i]
+            for j in range(i + 1, self.dimension):
+                numerator = self.initial_matrix[i][j]
+                for k in range(i):
+                    numerator -= self.s[k][i] * self.s[k][j] * self.d[k][k]
+                self.s[i][j] = numerator / self.s[i][i] * self.d[i][i]
+        self.determinant = math.sqrt(self.determinant)
 
-    def residual(self):
-        return np.dot(self.initial_matrix, self.solution) - self.initial_vector
+        for i in range(self.dimension):
+            numerator = self.initial_vector[i]
+            for k in range(i):
+                numerator -= self.s[k][i] * self.y[k][0]
+            self.y[i][0] = numerator / self.s[i][i]
 
-    def verification_matrix(self):
-        return np.dot(self.inverse, self.initial_matrix)
+    def backwards(self):
+        for i in range(self.dimension-1, -1, -1):
+            numerator = self.y[i][0]
+            for k in range(i + 1, self.dimension):
+                numerator -= self.s[i][k] * self.x[k][0] * self.d[i][i]
+            self.x[i][0] = numerator / (self.s[i][i] * self.d[i][i])
