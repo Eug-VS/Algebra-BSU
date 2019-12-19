@@ -1,7 +1,7 @@
 from toolkit import *
 
 
-k = 3
+k = -3
 alpha = k / 2
 
 A = [[3.81, 0.25, 1.28, 0.75 + alpha],
