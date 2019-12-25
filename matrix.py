@@ -1,10 +1,11 @@
 import sys
 
 
+
 class Matrix:
     @staticmethod
     def norm(matrix):
-        if matrix:
+        if matrix.any():
             norm = sys.float_info.min
             for i in range(len(matrix)):
                 somme = 0
@@ -15,13 +16,6 @@ class Matrix:
             return norm
         else:
             return None
-
-    @staticmethod
-    def norm_for_vector(vector):
-        norm = 0
-        for el in vector:
-            norm += el
-        return norm
 
     @staticmethod
     def multiply(matrix1, matrix2):

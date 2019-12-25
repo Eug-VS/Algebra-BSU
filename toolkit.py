@@ -1,14 +1,14 @@
 from copy import deepcopy
 from matrix import *
+import numpy as np
 
 
 class SLAE:
     def __init__(self, matrix, vector, precision):
-        self.initial_matrix = deepcopy(matrix)
-        self.vector = deepcopy(vector)
-        self.dimension = len(matrix)
-        self.identity = [[0 if i != j else 1 for j in range(len(self.initial_matrix[0]))]
-                         for i in range(len(self.initial_matrix))]
+        self.initial_matrix = np.array(matrix)
+        self.vector = vector
+        self.dimension = len(vector)
+        self.identity = np.identity(self.dimension)
         if precision:
             self.precision = 1 / precision
         else:
@@ -25,19 +25,20 @@ class SLAE:
                 s += matrix[i][j] * x[j]
         return s
 
+    def norm(self):
+        np.linalg.norm()
+
     def simple_iterative_method(self):
-        # A transposed * A
-        transposed = Matrix.transposed(self.initial_matrix)
-        matrix_a_t_a = Matrix.multiply(transposed, self.initial_matrix)
-        a_t_a_norm = Matrix.norm(matrix_a_t_a)
-        matrix_b = Matrix.sub(self.identity, Matrix.div(matrix_a_t_a, a_t_a_norm))
-        vector_b = Matrix.multiply_matrix_column(transposed, [self.vector[i] / a_t_a_norm for i in range(len(self.vector))])
+        symmetrical = np.matmul(self.initial_matrix.T, self.initial_matrix)
+        norm = Matrix.norm(symmetrical)
+        matrix_b = self.identity - symmetrical / norm
+        vector_b = np.matmul(self.initial_matrix.T, self.vector / norm)
         iterations_number = 0
-        x_prev = [0 for _ in range(len(self.vector))]
-        x_vector = deepcopy(vector_b)
-        while max_difference(x_vector, x_prev) > self.precision:
-            x_prev = deepcopy(x_vector)
-            x_vector = Matrix.add_v(Matrix.multiply_matrix_column(matrix_b, x_vector), vector_b)
+        x_prev = np.zeros(self.dimension)
+        x_vector = vector_b.copy()
+        while (x_vector - x_prev > self.precision).any():
+            x_prev = x_vector.copy()
+            x_vector = np.matmul(matrix_b, x_vector) + vector_b
             iterations_number += 1
         return x_vector, iterations_number, matrix_b, vector_b
 
